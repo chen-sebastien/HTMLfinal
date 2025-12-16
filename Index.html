@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心靈日記 - 心情追蹤應用</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'mood-positive': '#10B981',
+                        'mood-neutral': '#6B7280',
+                        'mood-negative': '#EF4444',
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(-10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 自訂樣式 */
+        :root {
+            --color-positive: #10B981;
+            --color-neutral: #6B7280;
+            --color-negative: #EF4444;
+        }
+        
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slide-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fade-in {
+            animation: fade-in 0.3s ease-out;
+        }
+        
+        .animate-slide-up {
+            animation: slide-up 0.3s ease-out;
+        }
+        
+        /* 自訂滾動條樣式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        .dark ::-webkit-scrollbar-track {
+            background: #374151;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        
+        .dark ::-webkit-scrollbar-thumb {
+            background: #6B7280;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #9CA3AF;
+        }
+        
+        /* 心情標籤動畫 */
+        .mood-tag {
+            transition: all 0.2s ease;
+        }
+        
+        .mood-tag:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* 進度條樣式 */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        
+        input[type="range"]::-webkit-slider-track {
+            background: #e5e7eb;
+            height: 8px;
+            border-radius: 4px;
+        }
+        
+        .dark input[type="range"]::-webkit-slider-track {
+            background: #4b5563;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 20px;
+            width: 20px;
+            background-color: #3b82f6;
+            border-radius: 50%;
+            border: 2px solid white;
+            margin-top: -6px;
+        }
+        
+        .dark input[type="range"]::-webkit-slider-thumb {
+            border: 2px solid #1f2937;
+        }
+        
+        /* 切換開關 */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #3b82f6;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        /* 心情卡片懸停效果 */
+        .mood-card {
+            transition: all 0.3s ease;
+        }
+        
+        .mood-card:hover {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: translateY(-2px);
+        }
+        
+        /* 漸變按鈕 */
+        .gradient-btn {
+            background-image: linear-gradient(to right, #3b82f6, #8b5cf6);
+            transition: all 0.3s ease;
+        }
+        
+        .gradient-btn:hover {
+            background-image: linear-gradient(to right, #2563eb, #7c3aed);
+            transform: translateY(-2px);
+        }
+        
+        /* 自訂文字區樣式 */
+        .custom-textarea {
+            transition: border-color 0.2s ease;
+        }
+        
+        .custom-textarea:focus {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+        
+        /* 載入動畫 */
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div id="root"></div>
+
+    <!-- React 和 ReactDOM CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- 主要應用程式 -->
+    <script type="text/babel">
+        // 簡單的記憶體儲存（用於演示，替換後端）
+        const storage = {
+            users: [],
+            entries: [],
+            currentUser: null,
+            settings: {} // 新增設定儲存
+        };
+
+        // 初始化 localStorage（如果可用）
+        const initializeStorage = () => {
+            if (typeof window !== 'undefined') {
+                const savedUsers = localStorage.getItem('moodApp_users');
+                const savedEntries = localStorage.getItem('moodApp_entries');
+                const savedSettings = localStorage.getItem('moodApp_settings');
+                
+                if (savedUsers) storage.users = JSON.parse(savedUsers);
+                if (savedEntries) storage.entries = JSON.parse(savedEntries);
+                if (savedSettings) storage.settings = JSON.parse(savedSettings);
+            }
+        };
+
+        // 保存到 localStorage
+        const saveToStorage = () => {
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('moodApp_users', JSON.stringify(storage.users));
+                localStorage.setItem('moodApp_entries', JSON.stringify(storage.entries));
+                localStorage.setItem('moodApp_settings', JSON.stringify(storage.settings));
+            }
+        };
+
+        // 密碼雜湊函數
+        const hashPassword = (password) => {
+            // 生產環境：請使用 bcrypt 或類似庫
+            // 這是簡單的演示用雜湊
+            return btoa(password + 'salt_key_demo');
+        };
+
+        // 心情分類
+        const moodCategories = {
+            正面: ['平靜', '充滿希望', '感恩', '滿足', '有活力', '樂觀'],
+            中性: ['疲憊', '不確定', '平淡', '無感'],
+            負面: ['焦慮', '不知所措', '煩躁', '沉重', '孤單', '壓力']
+        };
+
+        // 所有心情標籤（整合分類）
+        const allMoodTags = Object.values(moodCategories).flat();
+
+        // 心情顏色映射
+        const moodColors = {
+            正面: '#10B981',
+            中性: '#6B7280',
+            負面: '#EF4444'
+        };
+
+        const MoodCheckIn = () => {
+            const [view, setView] = React.useState('登入'); // 登入 | 註冊 | 首頁 | 日記 | 統計 | 設定
+            const [email, setEmail] = React.useState('');
+            const [password, setPassword] = React.useState('');
+            const [error, setError] = React.useState('');
+            const [successMessage, setSuccessMessage] = React.useState('');
+            const [loading, setLoading] = React.useState(false);
+            
+            // 心情紀錄狀態
+            const [selectedMoods, setSelectedMoods] = React.useState([]);
+            const [reflection, setReflection] = React.useState('');
+            const [entries, setEntries] = React.useState([]);
+            const [moodIntensity, setMoodIntensity] = React.useState(5); // 新增：心情強度 1-10
+            const [tags, setTags] = React.useState([]); // 新增：自訂標籤
+            const [currentTag, setCurrentTag] = React.useState('');
+            
+            // 統計數據
+            const [stats, setStats] = React.useState({
+                totalEntries: 0,
+                mostCommonMood: '',
+                averageMoodIntensity: 0,
+                moodFrequency: {},
+                weeklyData: []
+            });
+            
+            // 設定狀態
+            const [settings, setSettings] = React.useState({
+                darkMode: false,
+                dailyReminder: false,
+                reminderTime: '20:00',
+                moodColorScheme: 'default',
+                language: 'zh-TW'
+            });
+
+            // 初始化
+            React.useEffect(() => {
+                initializeStorage();
+                if (storage.currentUser) {
+                    loadEntries();
+                    calculateStats();
+                }
+                loadSettings();
+                
+                // 檢查是否為首次訪問
+                const firstVisit = localStorage.getItem('moodApp_firstVisit');
+                if (!firstVisit) {
+                    localStorage.setItem('moodApp_firstVisit', 'true');
+                    // 可以在此顯示歡迎訊息或教學
+                }
+            }, [view]);
+
+            // 載入設定
+            const loadSettings = () => {
+                if (storage.settings && storage.currentUser) {
+                    const userSettings = storage.settings[storage.currentUser.id] || settings;
+                    setSettings(userSettings);
+                    // 應用深色模式
+                    if (userSettings.darkMode) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                }
+            };
+
+            // 儲存設定
+            const saveSettings = () => {
+                if (storage.currentUser) {
+                    storage.settings[storage.currentUser.id] = settings;
+                    saveToStorage();
+                    showMessage('設定已儲存');
+                }
+            };
+
+            // 顯示訊息
+            const showMessage = (message, type = 'success') => {
+                if (type === 'success') {
+                    setSuccessMessage(message);
+                    setTimeout(() => setSuccessMessage(''), 3000);
+                } else {
+                    setError(message);
+                    setTimeout(() => setError(''), 3000);
+                }
+            };
+
+            // 載入日記條目
+            const loadEntries = () => {
+                if (!storage.currentUser) return;
+                
+                const userEntries = storage.entries.filter(
+                    e => e.userId === storage.currentUser.id
+                );
+                setEntries(userEntries.sort((a, b) => b.timestamp - a.timestamp));
+                saveToStorage();
+            };
+
+            // 計算統計數據
+            const calculateStats = () => {
+                if (!storage.currentUser || entries.length === 0) return;
+
+                const userEntries = storage.entries.filter(
+                    e => e.userId === storage.currentUser.id
+                );
+
+                // 計算心情頻率
+                const moodFrequency = {};
+                let totalIntensity = 0;
+                
+                userEntries.forEach(entry => {
+                    entry.moods.forEach(mood => {
+                        moodFrequency[mood] = (moodFrequency[mood] || 0) + 1;
+                    });
+                    totalIntensity += entry.intensity || 5;
+                });
+
+                // 找出最常見的心情
+                let mostCommonMood = '';
+                let maxFrequency = 0;
+                Object.entries(moodFrequency).forEach(([mood, freq]) => {
+                    if (freq > maxFrequency) {
+                        maxFrequency = freq;
+                        mostCommonMood = mood;
+                    }
+                });
+
+                // 計算每週數據（最近4週）
+                const weeklyData = [];
+                const now = new Date();
+                for (let i = 3; i >= 0; i--) {
+                    const weekStart = new Date(now);
+                    weekStart.setDate(now.getDate() - (i * 7));
+                    const weekEnd = new Date(weekStart);
+                    weekEnd.setDate(weekStart.getDate() + 6);
+                    
+                    const weekEntries = userEntries.filter(entry => {
+                        const entryDate = new Date(entry.timestamp);
+                        return entryDate >= weekStart && entryDate <= weekEnd;
+                    });
+                    
+                    weeklyData.push({
+                        week: `第${4-i}週`,
+                        entries: weekEntries.length,
+                        avgIntensity: weekEntries.reduce((sum, e) => sum + (e.intensity || 5), 0) / (weekEntries.length || 1)
+                    });
+                }
+
+                setStats({
+                    totalEntries: userEntries.length,
+                    mostCommonMood,
+                    averageMoodIntensity: totalIntensity / userEntries.length,
+                    moodFrequency,
+                    weeklyData
+                });
+            };
+
+            // 註冊功能
+            const handleRegister = (e) => {
+                e.preventDefault();
+                setError('');
+                setLoading(true);
+
+                setTimeout(() => {
+                    if (!email || !password) {
+                        setError('請填寫所有欄位');
+                        setLoading(false);
+                        return;
+                    }
+
+                    if (password.length < 6) {
+                        setError('密碼必須至少6個字元');
+                        setLoading(false);
+                        return;
+                    }
+
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(email)) {
+                        setError('請輸入有效的電子郵件地址');
+                        setLoading(false);
+                        return;
+                    }
+
+                    const exists = storage.users.find(u => u.email === email);
+                    if (exists) {
+                        setError('此電子郵件已經註冊');
+                        setLoading(false);
+                        return;
+                    }
+
+                    const user = {
+                        id: Date.now().toString(),
+                        email,
+                        password: hashPassword(password),
+                        createdAt: new Date().toISOString(),
+                        lastLogin: new Date().toISOString()
+                    };
+
+                    storage.users.push(user);
+                    storage.currentUser = { 
+                        id: user.id, 
+                        email: user.email,
+                        createdAt: user.createdAt
+                    };
+                    
+                    saveToStorage();
+                    setEmail('');
+                    setPassword('');
+                    setView('首頁');
+                    showMessage('註冊成功！歡迎使用心情日記');
+                    setLoading(false);
+                }, 500); // 模擬網路延遲
+            };
+
+            // 登入功能
+            const handleLogin = (e) => {
+                e.preventDefault();
+                setError('');
+                setLoading(true);
+
+                setTimeout(() => {
+                    const user = storage.users.find(
+                        u => u.email === email && u.password === hashPassword(password)
+                    );
+
+                    if (!user) {
+                        setError('電子郵件或密碼錯誤');
+                        setLoading(false);
+                        return;
+                    }
+
+                    // 更新最後登入時間
+                    user.lastLogin = new Date().toISOString();
+                    storage.currentUser = { 
+                        id: user.id, 
+                        email: user.email,
+                        createdAt: user.createdAt,
+                        lastLogin: user.lastLogin
+                    };
+                    
+                    saveToStorage();
+                    setEmail('');
+                    setPassword('');
+                    setView('首頁');
+                    showMessage(`歡迎回來，${user.email.split('@')[0]}！`);
+                    setLoading(false);
+                }, 500);
+            };
+
+            // 登出功能
+            const handleLogout = () => {
+                storage.currentUser = null;
+                setView('登入');
+                setSelectedMoods([]);
+                setReflection('');
+                setEntries([]);
+                setTags([]);
+                showMessage('已成功登出');
+            };
+
+            // 切換心情選擇
+            const toggleMood = (mood) => {
+                setSelectedMoods(prev =>
+                    prev.includes(mood)
+                        ? prev.filter(m => m !== mood)
+                        : [...prev, mood]
+                );
+            };
+
+            // 新增標籤
+            const addTag = () => {
+                if (currentTag.trim() && !tags.includes(currentTag.trim())) {
+                    setTags([...tags, currentTag.trim()]);
+                    setCurrentTag('');
+                }
+            };
+
+            // 移除標籤
+            const removeTag = (tagToRemove) => {
+                setTags(tags.filter(tag => tag !== tagToRemove));
+            };
+
+            // 儲存日記條目
+            const handleSaveEntry = () => {
+                if (selectedMoods.length === 0) {
+                    showMessage('請至少選擇一種心情', 'error');
+                    return;
+                }
+
+                const entry = {
+                    id: Date.now().toString(),
+                    userId: storage.currentUser.id,
+                    moods: [...selectedMoods],
+                    reflection: reflection.trim(),
+                    intensity: moodIntensity,
+                    tags: [...tags],
+                    timestamp: Date.now(),
+                    date: new Date().toISOString().split('T')[0]
+                };
+
+                storage.entries.push(entry);
+                saveToStorage();
+                
+                setSelectedMoods([]);
+                setReflection('');
+                setMoodIntensity(5);
+                setTags([]);
+                setView('日記');
+                showMessage('日記已儲存！');
+                
+                // 重新載入條目和統計
+                loadEntries();
+                calculateStats();
+            };
+
+            // 刪除日記條目
+            const handleDeleteEntry = (entryId) => {
+                if (window.confirm('確定要刪除這篇日記嗎？此操作無法復原。')) {
+                    storage.entries = storage.entries.filter(e => e.id !== entryId);
+                    saveToStorage();
+                    loadEntries();
+                    calculateStats();
+                    showMessage('日記已刪除');
+                }
+            };
+
+            // 匯出資料
+            const handleExportData = () => {
+                if (!storage.currentUser) return;
+                
+                const userEntries = storage.entries.filter(
+                    e => e.userId === storage.currentUser.id
+                );
+                
+                const data = {
+                    user: storage.currentUser,
+                    entries: userEntries,
+                    exportDate: new Date().toISOString()
+                };
+                
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `心情日記_${storage.currentUser.email}_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showMessage('資料已匯出');
+            };
+
+            // 格式化日期
+            const formatDate = (timestamp) => {
+                const date = new Date(timestamp);
+                const today = new Date();
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+
+                if (date.toDateString() === today.toDateString()) {
+                    return `今天 ${date.toLocaleTimeString('zh-TW', { hour: 'numeric', minute: '2-digit' })}`;
+                } else if (date.toDateString() === yesterday.toDateString()) {
+                    return `昨天 ${date.toLocaleTimeString('zh-TW', { hour: 'numeric', minute: '2-digit' })}`;
+                }
+                return date.toLocaleDateString('zh-TW', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    hour: 'numeric', 
+                    minute: '2-digit' 
+                });
+            };
+
+            // 取得心情分類
+            const getMoodCategory = (mood) => {
+                for (const [category, moods] of Object.entries(moodCategories)) {
+                    if (moods.includes(mood)) return category;
+                }
+                return '中性';
+            };
+
+            // 深色模式切換
+            const toggleDarkMode = () => {
+                const newSettings = {
+                    ...settings,
+                    darkMode: !settings.darkMode
+                };
+                setSettings(newSettings);
+                
+                if (newSettings.darkMode) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            };
+
+            // 驗證頁面
+            if (view === '登入' || view === '註冊') {
+                return (
+                    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4 transition-colors">
+                        <div className="w-full max-w-md">
+                            <div className="text-center mb-12 animate-slide-up">
+                                <h1 className="text-4xl font-light tracking-wide text-gray-900 dark:text-white mb-2">
+                                    心靈日記
+                                </h1>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 font-light">
+                                    記錄您的心情，了解內心的自己
+                                </p>
+                            </div>
+
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 animate-fade-in">
+                                <div className="flex gap-4 mb-8 border-b border-gray-100 dark:border-gray-700">
+                                    <button
+                                        onClick={() => { setView('登入'); setError(''); }}
+                                        className={`pb-3 px-1 text-sm font-light transition-colors ${
+                                            view === '登入'
+                                            ? 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white'
+                                            : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                                        }`}
+                                    >
+                                        登入
+                                    </button>
+                                    <button
+                                        onClick={() => { setView('註冊'); setError(''); }}
+                                        className={`pb-3 px-1 text-sm font-light transition-colors ${
+                                            view === '註冊'
+                                            ? 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white'
+                                            : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                                        }`}
+                                    >
+                                        註冊帳號
+                                    </button>
+                                </div>
+
+                                <div>
+                                    {error && (
+                                        <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-800 rounded text-sm text-red-600 dark:text-red-400 animate-fade-in">
+                                            {error}
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-5">
+                                        <div>
+                                            <label className="block text-sm font-light text-gray-600 dark:text-gray-300 mb-2">
+                                                電子郵件
+                                            </label>
+                                            <input
+                                                type="email"
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                                onKeyDown={(e) => e.key === 'Enter' && (view === '登入' ? handleLogin(e) : handleRegister(e))}
+                                                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:border-gray-400 dark:focus:border-gray-400 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                                placeholder="your@email.com"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-light text-gray-600 dark:text-gray-300 mb-2">
+                                                密碼
+                                            </label>
+                                            <input
+                                                type="password"
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                onKeyDown={(e) => e.key === 'Enter' && (view === '登入' ? handleLogin(e) : handleRegister(e))}
+                                                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:border-gray-400 dark:focus:border-gray-400 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                                placeholder="••••••••"
+                                            />
+                                            {view === '註冊' && (
+                                                <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
+                                                    至少6個字元
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={(e) => view === '登入' ? handleLogin(e) : handleRegister(e)}
+                                        disabled={loading}
+                                        className="w-full mt-8 bg-gray-900 dark:bg-white text-white dark:text-gray-900 py-3 rounded-lg text-sm font-light hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors flex items-center justify-center"
+                                    >
+                                        {loading ? (
+                                            <>
+                                                <div className="loading-spinner mr-2"></div>
+                                                {view === '登入' ? '登入中...' : '註冊中...'}
+                                            </>
+                                        ) : (
+                                            view === '登入' ? '繼續' : '建立帳號'
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="mt-8 text-center text-xs text-gray-400 dark:text-gray-500 font-light px-4">
+                                <p className="mb-2">安全性：密碼使用單向加密雜湊處理</p>
+                                <p>您的日記只有您自己可以查看</p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // 主應用程式介面
+            return (
+                <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+                    {/* 成功訊息 */}
+                    {successMessage && (
+                        <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg animate-fade-in flex items-center">
+                            <span className="mr-2">✓</span>
+                            {successMessage}
+                        </div>
+                    )}
+
+                    {/* 頂部導覽列 */}
+                    <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 sticky top-0 z-40">
+                        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+                            <div className="flex items-center gap-8">
+                                <h1 className="text-xl font-light tracking-wide text-gray-900 dark:text-white">
+                                    心靈日記
+                                </h1>
+                                <div className="flex items-center gap-6">
+                                    <button
+                                        onClick={() => setView('首頁')}
+                                        className={`text-sm font-light transition-colors ${
+                                            view === '首頁' ? 'text-gray-900 dark:text-white' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                                        }`}
+                                    >
+                                        紀錄心情
+                                    </button>
+                                    <button
+                                        onClick={() => { setView('日記'); calculateStats(); }}
+                                        className={`text-sm font-light transition-colors ${
+                                            view === '日記' ? 'text-gray-900 dark:text-white' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                                        }`}
+                                    >
+                                        我的日記
+                                    </button>
+                                    <button
+                                        onClick={() => { setView('統計'); calculateStats(); }}
+                                        className={`text-sm font-light transition-colors ${
+                                            view === '統計' ? 'text-gray-900 dark:text-white' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                                        }`}
+                                    >
+                                        統計分析
+                                    </button>
+                                    <button
+                                        onClick={() => setView('設定')}
+                                        className={`text-sm font-light transition-colors ${
+                                            view === '設定' ? 'text-gray-900 dark:text-white' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                                        }`}
+                                    >
+                                        設定
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-4">
+                                <span className="text-sm text-gray-500 dark:text-gray-400 hidden md:block">
+                                    {storage.currentUser?.email}
+                                </span>
+                                <button
+                                    onClick={toggleDarkMode}
+                                    className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+                                >
+                                    {settings.darkMode ? '☀️' : '🌙'}
+                                </button>
+                                <button
+                                    onClick={handleLogout}
+                                    className="text-sm font-light text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                                >
+                                    登出
+                                </button>
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* 心情紀錄頁面 */}
+                    {view === '首頁' && (
+                        <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
+                            <div className="text-center mb-8 md:mb-12">
+                                <h2 className="text-2xl md:text-3xl font-light text-gray-900 dark:text-white mb-3">
+                                    此刻的心情如何？
+                                </h2>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 font-light">
+                                    選擇符合您心情的詞語，也可以自由發揮
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+                                {/* 左側：心情選擇 */}
+                                <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 md:p-8">
+                                    <div className="mb-6 md:mb-8">
+                                        <h3 className="text-lg font-light text-gray-900 dark:text-white mb-4">心情分類</h3>
+                                        
+                                        {Object.entries(moodCategories).map(([category, moods]) => (
+                                            <div key={category} className="mb-6">
+                                                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                                    <span 
+                                                        className="w-3 h-3 rounded-full" 
+                                                        style={{ backgroundColor: moodColors[category] }}
+                                                    ></span>
+                                                    {category}
+                                                </h4>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {moods.map(mood => (
+                                                        <button
+                                                            key={mood}
+                                                            onClick={() => toggleMood(mood)}
+                                                            className={`px-3 py-2 rounded-full text-sm font-light transition-all mood-tag ${
+                                                                selectedMoods.includes(mood)
+                                                                    ? 'text-white'
+                                                                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                                            }`}
+                                                            style={{
+                                                                backgroundColor: selectedMoods.includes(mood) 
+                                                                    ? moodColors[category] 
+                                                                    : 'transparent',
+                                                                border: selectedMoods.includes(mood) 
+                                                                    ? 'none'
+                                                                    : '1px solid #e5e7eb'
+                                                            }}
+                                                        >
+                                                            {mood}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* 自訂標籤 */}
+                                    <div className="mb-6 md:mb-8">
+                                        <h3 className="text-lg font-light text-gray-900 dark:text-white mb-4">自訂標籤</h3>
+                                        <div className="flex gap-2 mb-3">
+                                            <input
+                                                type="text"
+                                                value={currentTag}
+                                                onChange={(e) => setCurrentTag(e.target.value)}
+                                                onKeyDown={(e) => e.key === 'Enter' && addTag()}
+                                                className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:border-gray-400 dark:focus:border-gray-400 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                                placeholder="輸入自訂標籤..."
+                                            />
+                                            <button
+                                                onClick={addTag}
+                                                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                                            >
+                                                新增
+                                            </button>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {tags.map(tag => (
+                                                <span
+                                                    key={tag}
+                                                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs"
+                                                >
+                                                    {tag}
+                                                    <button
+                                                        onClick={() => removeTag(tag)}
+                                                        className="text-blue-500 hover:text-blue-700"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 右側：詳細資訊和反思 */}
+                                <div className="space-y-6 md:space-y-8">
+                                    {/* 心情強度 */}
+                                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                                        <h3 className="text-lg font-light text-gray-900 dark:text-white mb-4">心情強度</h3>
+                                        <div className="space-y-4">
+                                            <div className="text-center">
+                                                <span className="text-2xl font-light text-gray-900 dark:text-white">{moodIntensity}</span>
+                                                <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">/10</span>
+                                            </div>
+                                            <input
+                                                type="range"
+                                                min="1"
+                                                max="10"
+                                                value={moodIntensity}
+                                                onChange={(e) => setMoodIntensity(parseInt(e.target.value))}
+                                                className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                                            />
+                                            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                                                <span>輕微</span>
+                                                <span>中等</span>
+                                                <span>強烈</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 反思區域 */}
+                                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                                        <h3 className="text-lg font-light text-gray-900 dark:text-white mb-4">反思與想法</h3>
+                                        <textarea
+                                            value={reflection}
+                                            onChange={(e) => setReflection(e.target.value)}
+                                            maxLength={500}
+                                            rows={6}
+                                            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:border-gray-400 dark:focus:border-gray-400 transition-colors resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white custom-textarea"
+                                            placeholder="今天發生了什麼事？有什麼想法想記錄下來嗎？"
+                                        />
+                                        <div className="flex justify-between items-center mt-3">
+                                            <p className="text-xs text-gray-400 dark:text-gray-500">
+                                                支援 Markdown 格式
+                                            </p>
+                                            <p className="text-xs text-gray-400 dark:text-gray-500">
+                                                {reflection.length} / 500
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* 儲存按鈕 */}
+                                    <button
+                                        onClick={handleSaveEntry}
+                                        disabled={selectedMoods.length === 0}
+                                        className={`w-full py-4 rounded-xl text-sm font-light transition-all transform hover:scale-[1.02] ${
+                                            selectedMoods.length > 0
+                                                ? 'gradient-btn text-white shadow-lg hover:shadow-xl'
+                                                : 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
+                                        }`}
+                                    >
+                                        {selectedMoods.length > 0 
+                                            ? `儲存心情紀錄 (${selectedMoods.length}個心情)` 
+                                            : '請選擇至少一個心情'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 日記檢視頁面 */}
+                    {view === '日記' && (
+                        <div className="max-w-4xl mx-auto px-4 py-8 md:py-12">
+                            <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-8 md:mb-12">
+                                <div className="mb-4 md:mb-0">
+                                    <h2 className="text-2xl md:text-3xl font-light text-gray-900 dark:text-white mb-2">
+                                        我的心情日記
+                                    </h2>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        {entries.length === 0 
+                                            ? '還沒有任何紀錄' 
+                                            : `共 ${entries.length} 篇日記，${new Set(entries.map(e => e.date)).size} 天`}
+                                    </p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={handleExportData}
+                                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                    >
+                                        匯出資料
+                                    </button>
+                                    <button
+                                        onClick={() => setView('首頁')}
+                                        className="px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-sm hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
+                                    >
+                                        新增紀錄
+                                    </button>
+                                </div>
+                            </div>
+
+                            {entries.length === 0 ? (
+                                <div className="text-center py-12 md:py-16">
+                                    <div className="text-5xl mb-4">📝</div>
+                                    <h3 className="text-xl font-light text-gray-900 dark:text-white mb-2">
+                                        開始記錄您的心情吧！
+                                    </h3>
+                                    <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                                        記錄心情可以幫助您更好地了解自己的情緒模式和觸發因素
+                                    </p>
+                                    <button
+                                        onClick={() => setView('首頁')}
+                                        className="px-6 py-3 gradient-btn text-white rounded-lg hover:shadow-lg transition-all"
+                                    >
+                                        開始記錄
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    {entries.map(entry => (
+                                        <div
+                                            key={entry.id}
+                                            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition-shadow mood-card"
+                                        >
+                                            <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-4">
+                                                <div className="flex items-center gap-4 mb-3 md:mb-0">
+                                                    <div className="text-2xl">
+                                                        {entry.intensity >= 7 ? '😊' : 
+                                                         entry.intensity >= 4 ? '😐' : '😔'}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm text-gray-900 dark:text-white font-medium">
+                                                            {formatDate(entry.timestamp)}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                            心情強度：{entry.intensity}/10
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleDeleteEntry(entry.id)}
+                                                    className="text-sm text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors self-start md:self-auto"
+                                                >
+                                                    刪除
+                                                </button>
+                                            </div>
+
+                                            <div className="flex flex-wrap gap-2 mb-4">
+                                                {entry.moods.map(mood => {
+                                                    const category = getMoodCategory(mood);
+                                                    return (
+                                                        <span
+                                                            key={mood}
+                                                            className="px-3 py-1 rounded-full text-xs font-light text-white"
+                                                            style={{ backgroundColor: moodColors[category] }}
+                                                        >
+                                                            {mood}
+                                                        </span>
+                                                    );
+                                                })}
+                                                {entry.tags?.map(tag => (
+                                                    <span
+                                                        key={tag}
+                                                        className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs"
+                                                    >
+                                                        #{tag}
+                                                    </span>
+                                                ))}
+                                            </div>
+
+                                            {entry.reflection && (
+                                                <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+                                                    <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                                                        {entry.reflection}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* 統計分析頁面 */}
+                    {view === '統計' && (
+                        <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
+                            <div className="text-center mb-8 md:mb-12">
+                                <h2 className="text-2xl md:text-3xl font-light text-gray-900 dark:text-white mb-3">
+                                    心情統計分析
+                                </h2>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    透過數據了解您的心情變化趨勢
+                                </p>
+                            </div>
+
+                            {entries.length === 0 ? (
+                                <div className="text-center py-12 md:py-16">
+                                    <div className="text-5xl mb-4">📊</div>
+                                    <h3 className="text-xl font-light text-gray-900 dark:text-white mb-2">
+                                        需要更多數據來分析
+                                    </h3>
+                                    <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                                        記錄幾篇日記後，這裡會顯示您的統計分析
+                                    </p>
+                                    <button
+                                        onClick={() => setView('首頁')}
+                                        className="px-6 py-3 gradient-btn text-white rounded-lg hover:shadow-lg transition-all"
+                                    >
+                                        開始記錄
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+                                    {/* 概覽卡片 */}
+                                    <div className="grid grid-cols-2 gap-4 md:gap-6">
+                                        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 md:p-6 border border-gray-100 dark:border-gray-700">
+                                            <h3 className="text-sm text-gray-500 dark:text-gray-400 mb-2">總紀錄數</h3>
+                                            <p className="text-2xl md:text-3xl font-light text-gray-900 dark:text-white">{stats.totalEntries}</p>
+                                        </div>
+                                        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 md:p-6 border border-gray-100 dark:border-gray-700">
+                                            <h3 className="text-sm text-gray-500 dark:text-gray-400 mb-2">平均強度</h3>
+                                            <p className="text-2xl md:text-3xl font-light text-gray-900 dark:text-white">
+                                                {stats.averageMoodIntensity.toFixed(1)}
+                                            </p>
+                                        </div>
+                                        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 md:p-6 border border-gray-100 dark:border-gray-700">
+                                            <h3 className="text-sm text-gray-500 dark:text-gray-400 mb-2">最常出現心情</h3>
+                                            <p className="text-lg md:text-xl font-light text-gray-900 dark:text-white truncate">{stats.mostCommonMood}</p>
+                                        </div>
+                                        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 md:p-6 border border-gray-100 dark:border-gray-700">
+                                            <h3 className="text-sm text-gray-500 dark:text-gray-400 mb-2">紀錄天數</h3>
+                                            <p className="text-2xl md:text-3xl font-light text-gray-900 dark:text-white">
+                                                {new Set(entries.map(e => e.date)).size}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* 心情分佈 */}
+                                    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-100 dark:border-gray-700">
+                                        <h3 className="text-lg font-light text-gray-900 dark:text-white mb-6">心情分佈</h3>
+                                        <div className="space-y-4">
+                                            {Object.entries(stats.moodFrequency)
+                                                .sort(([, a], [, b]) => b - a)
+                                                .slice(0, 8)
+                                                .map(([mood, count]) => {
+                                                    const percentage = (count / stats.totalEntries * 100).toFixed(1);
+                                                    const category = getMoodCategory(mood);
+                                                    return (
+                                                        <div key={mood} className="space-y-1">
+                                                            <div className="flex justify-between text-sm">
+                                                                <span className="text-gray-700 dark:text-gray-300 truncate">{mood}</span>
+                                                                <span className="text-gray-500 dark:text-gray-400">{count}次 ({percentage}%)</span>
+                                                            </div>
+                                                            <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                                                <div 
+                                                                    className="h-full rounded-full"
+                                                                    style={{
+                                                                        width: `${percentage}%`,
+                                                                        backgroundColor: moodColors[category]
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                        </div>
+                                    </div>
+
+                                    {/* 每週趨勢 */}
+                                    <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-100 dark:border-gray-700">
+                                        <h3 className="text-lg font-light text-gray-900 dark:text-white mb-6">每週趨勢</h3>
+                                        <div className="flex items-end gap-3 md:gap-4 h-40 md:h-48">
+                                            {stats.weeklyData.map((week, index) => (
+                                                <div key={index} className="flex-1 flex flex-col items-center">
+                                                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">{week.week}</div>
+                                                    <div className="relative flex-1 w-full flex items-end">
+                                                        <div
+                                                            className="w-full bg-gradient-to-t from-blue-500 to-blue-300 dark:from-blue-400 dark:to-blue-600 rounded-t-lg transition-all hover:opacity-80"
+                                                            style={{ height: `${Math.min(week.entries * 20, 100)}%` }}
+                                                        />
+                                                    </div>
+                                                    <div className="mt-2 text-center">
+                                                        <div className="text-sm font-medium text-gray-900 dark:text-white">{week.entries}</div>
+                                                        <div className="text-xs text-gray-500 dark:text-gray-400">篇</div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* 心情分類圓餅圖 */}
+                                    <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-100 dark:border-gray-700">
+                                        <h3 className="text-lg font-light text-gray-900 dark:text-white mb-6">心情分類比例</h3>
+                                        <div className="flex flex-col lg:flex-row items-center gap-6 md:gap-8">
+                                            <div className="relative w-40 h-40 md:w-48 md:h-48">
+                                                {/* 簡化版圓餅圖 */}
+                                                <div className="absolute inset-0 rounded-full border-8"
+                                                    style={{
+                                                        borderColor: `conic-gradient(
+                                                            ${moodColors.正面} 0% ${(Object.values(moodCategories.正面).length / allMoodTags.length * 100)}%,
+                                                            ${moodColors.中性} 0% ${(Object.values(moodCategories.中性).length / allMoodTags.length * 100 + (Object.values(moodCategories.正面).length / allMoodTags.length * 100))}%,
+                                                            ${moodColors.負面} 0% 100%
+                                                        )`
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="space-y-4">
+                                                {Object.entries(moodColors).map(([category, color]) => (
+                                                    <div key={category} className="flex items-center gap-3">
+                                                        <div 
+                                                            className="w-4 h-4 rounded-full" 
+                                                            style={{ backgroundColor: color }}
+                                                        />
+                                                        <span className="text-gray-700 dark:text-gray-300">{category}</span>
+                                                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                                                            ({moodCategories[category].length}種心情)
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* 設定頁面 */}
+                    {view === '設定' && (
+                        <div className="max-w-2xl mx-auto px-4 py-8 md:py-12">
+                            <div className="text-center mb-8 md:mb-12">
+                                <h2 className="text-2xl md:text-3xl font-light text-gray-900 dark:text-white mb-3">
+                                    設定
+                                </h2>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    自訂您的使用體驗
+                                </p>
+                            </div>
+
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 md:p-8">
+                                <div className="space-y-8">
+                                    {/* 通知設定 */}
+                                    <div>
+                                        <h3 className="text-lg font-light text-gray-900 dark:text-white mb-6">通知設定</h3>
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-gray-700 dark:text-gray-300">每日提醒</p>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400">每天提醒您記錄心情</p>
+                                                </div>
+                                                <label className="toggle-switch">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={settings.dailyReminder}
+                                                        onChange={(e) => setSettings({...settings, dailyReminder: e.target.checked})}
+                                                    />
+                                                    <span className="toggle-slider"></span>
+                                                </label>
+                                            </div>
+                                            
+                                            {settings.dailyReminder && (
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-gray-700 dark:text-gray-300">提醒時間</p>
+                                                    <input
+                                                        type="time"
+                                                        value={settings.reminderTime}
+                                                        onChange={(e) => setSettings({...settings, reminderTime: e.target.value})}
+                                                        className="px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* 顯示設定 */}
+                                    <div>
+                                        <h3 className="text-lg font-light text-gray-900 dark:text-white mb-6">顯示設定</h3>
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-gray-700 dark:text-gray-300">深色模式</p>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400">切換淺色/深色主題</p>
+                                                </div>
+                                                <label className="toggle-switch">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={settings.darkMode}
+                                                        onChange={toggleDarkMode}
+                                                    />
+                                                    <span className="toggle-slider"></span>
+                                                </label>
+                                            </div>
+                                            
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-gray-700 dark:text-gray-300">顏色主題</p>
+                                                <select
+                                                    value={settings.moodColorScheme}
+                                                    onChange={(e) => setSettings({...settings, moodColorScheme: e.target.value})}
+                                                    className="px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                                >
+                                                    <option value="default">預設</option>
+                                                    <option value="warm">溫暖</option>
+                                                    <option value="cool">冷色</option>
+                                                    <option value="pastel">柔和</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 資料管理 */}
+                                    <div>
+                                        <h3 className="text-lg font-light text-gray-900 dark:text-white mb-6">資料管理</h3>
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-gray-700 dark:text-gray-300">資料備份</p>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400">匯出您的所有資料</p>
+                                                </div>
+                                                <button
+                                                    onClick={handleExportData}
+                                                    className="px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-sm hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
+                                                >
+                                                    匯出資料
+                                                </button>
+                                            </div>
+                                            
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-gray-700 dark:text-gray-300">清除資料</p>
+                                                    <p className="text-sm text-red-500 dark:text-red-400">此操作無法復原</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => {
+                                                        if (window.confirm('確定要清除所有資料嗎？這將刪除您的所有日記紀錄。')) {
+                                                            storage.entries = storage.entries.filter(e => e.userId !== storage.currentUser.id);
+                                                            saveToStorage();
+                                                            loadEntries();
+                                                            showMessage('資料已清除');
+                                                        }
+                                                    }}
+                                                    className="px-4 py-2 border border-red-500 text-red-500 rounded-lg text-sm hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                                                >
+                                                    清除我的資料
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 關於 */}
+                                    <div>
+                                        <h3 className="text-lg font-light text-gray-900 dark:text-white mb-6">關於</h3>
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-gray-700 dark:text-gray-300">版本</p>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400">心靈日記 v1.0.0</p>
+                                                </div>
+                                                <span className="text-sm text-gray-500 dark:text-gray-400">2023</span>
+                                            </div>
+                                            
+                                            <div>
+                                                <p className="text-gray-700 dark:text-gray-300 mb-2">說明</p>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                    這是一個隱私優先的心情追蹤應用程式，所有資料都儲存在您的瀏覽器中，不會傳送到任何伺服器。
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 儲存設定按鈕 */}
+                                    <div className="pt-8 border-t border-gray-100 dark:border-gray-700">
+                                        <button
+                                            onClick={saveSettings}
+                                            className="w-full py-4 gradient-btn text-white rounded-xl text-sm font-light hover:shadow-lg transition-all"
+                                        >
+                                            儲存設定
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 頁尾 */}
+                    <footer className="mt-12 pt-8 pb-6 border-t border-gray-100 dark:border-gray-800">
+                        <div className="max-w-6xl mx-auto px-4">
+                            <div className="flex flex-col md:flex-row justify-between items-center">
+                                <div className="mb-4 md:mb-0">
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        © 2023 心靈日記。保留所有權利。
+                                    </p>
+                                </div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400">
+                                    <p>專為隱私設計 • 資料永不離開您的裝置</p>
+                                </div>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            );
+        };
+
+        // 渲染應用程式
+        const App = () => {
+            return <MoodCheckIn />;
+        };
+
+        // 初始化應用程式
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
